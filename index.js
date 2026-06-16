@@ -4,69 +4,59 @@ const axios = require("axios");
 const app = express();
 app.use(express.json());
 
-// 🔑 換成你的 Channel Access Token
 const TOKEN = "qL3EOBIM4T+WQdBW7rakYg2D4FLYe8hFI+LqWQCRNDSLwvv7N8pKWKUWLEsmCODumMQyK5JS/bE8nq55IBOJ9ZRvWI8fUofjzPh4pf0w125JK11csYm2Ia/HkecHQK+kxqtWdnlYpltLldPr3jnDSwdB04t89/1O/w1cDnyilFU=";
 
-// 🖼️ 圖片（你的 R2 圖）
 const IMAGE_URL = "https://pub-6dd82b21024644948b7876ea8084873a.r2.dev/IMG_7409.jpeg";
 
-// 🚀 webhook
 app.post("/webhook", (req, res) => {
-  // ⚠️ 先回 200（避免 LINE timeout）
+  // ✅ 1. 一定先回 200（避免 timeout）
   res.sendStatus(200);
 
   const events = req.body.events || [];
 
-  events.forEach(async (event) => {
-    console.log("event type:", event.type);
+  // ❗ 不用 forEach async（改 for...of）
+  for (const event of events) {
 
-    try {
+    console.log("event:", event.type);
 
-      // ✅ Bot 被加入群組 / 朋友
-      if (event.type === "join") {
-        await sendImage(event.replyToken);
-      }
-
-      // ⚠️ 有些群組會用 memberJoined
-      if (event.type === "memberJoined") {
-        await sendImage(event.replyToken);
-      }
-
-    } catch (err) {
-      console.log("error:", err.response?.data || err.message);
+    if (event.type === "join" || event.type === "memberJoined") {
+      sendImage(event.replyToken);
     }
-  });
+  }
 });
 
-// 📦 發圖片函式
+// 🚀 發圖函式（獨立出去）
 async function sendImage(replyToken) {
-  return axios.post(
-    "https://api.line.me/v2/bot/message/reply",
-    {
-      replyToken,
-      messages: [
-        {
-          type: "image",
-          originalContentUrl: IMAGE_URL,
-          previewImageUrl: IMAGE_URL
+  try {
+    await axios.post(
+      "https://api.line.me/v2/bot/message/reply",
+      {
+        replyToken,
+        messages: [
+          {
+            type: "image",
+            originalContentUrl: IMAGE_URL,
+            previewImageUrl: IMAGE_URL
+          }
+        ]
+      },
+      {
+        headers: {
+          "Authorization": `Bearer ${TOKEN}`,
+          "Content-Type": "application/json"
         }
-      ]
-    },
-    {
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${TOKEN}`
       }
-    }
-  );
+    );
+  } catch (err) {
+    console.log("LINE reply error:", err.response?.data || err.message);
+  }
 }
 
-// 🟢 測試用
+// 測試
 app.get("/", (req, res) => {
-  res.send("LINE bot is running");
+  res.send("OK");
 });
 
-// 🔥 Render 必須這樣寫
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log("running on", port);
