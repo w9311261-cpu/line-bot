@@ -4,7 +4,7 @@ const app = express();
 app.use(express.json());
 
 // Render 環境變數
-const TOKEN = process.env.LINE_TOKEN;
+const TOKEN = "RUMfr7ceblcmyCJrpkjDScRR4Qr64RGfSgjYz/XZcNJpxFXl5T1Dfhp+MZaf2SU3mMQyK5JS/bE8nq55IBOJ9ZRvWI8fUofjzPh4pf0w125Xc51g/IApMGVGYRkNRn0owpXB0CWvv+5CfCgd5guTBgdB04t89/1O/w1cDnyilFU=";
 
 // 歡迎圖片
 const IMAGE_URL =
