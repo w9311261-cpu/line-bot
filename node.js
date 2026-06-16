@@ -6,7 +6,7 @@ app.use(express.json());
 
 const TOKEN = "qL3EOBIM4T+WQdBW7rakYg2D4FLYe8hFI+LqWQCRNDSLwvv7N8pKWKUWLEsmCODumMQyK5JS/bE8nq55IBOJ9ZRvWI8fUofjzPh4pf0w125JK11csYm2Ia/HkecHQK+kxqtWdnlYpltLldPr3jnDSwdB04t89/1O/w1cDnyilFU=";
 
-const IMAGE_URL = "https://i.imgur.com/xxxx.jpg"; // 換成可公開圖片
+const IMAGE_URL = "https://pub-6dd82b21024644948b7876ea8084873a.r2.dev/IMG_7409.jpeg"; // 換成可公開圖片
 
 app.post("/webhook", async (req, res) => {
   const events = req.body.events;
