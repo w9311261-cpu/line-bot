@@ -3,78 +3,79 @@ const express = require("express");
 const app = express();
 app.use(express.json());
 
-// Render 環境變數
-const TOKEN = "RUMfr7ceblcmyCJrpkjDScRR4Qr64RGfSgjYz/XZcNJpxFXl5T1Dfhp+MZaf2SU3mMQyK5JS/bE8nq55IBOJ9ZRvWI8fUofjzPh4pf0w125Xc51g/IApMGVGYRkNRn0owpXB0CWvv+5CfCgd5guTBgdB04t89/1O/w1cDnyilFU=";
+const TOKEN = "47qg9DKj+Vr+Ns37Q7KBs7teDe6ns+nnE6N26gaVS0HLeru2sKfk0pRSjQ2uB5FFmMQyK5JS/bE8nq55IBOJ9ZRvWI8fUofjzPh4pf0w126ZAaFbKkikSbKZoY6So9Z2JuUdUCLClJ/X358aVytoRwdB04t89/1O/w1cDnyilFU=";
 
-// 歡迎圖片
+// 圖片
 const IMAGE_URL =
   "https://pub-6dd82b21024644948b7876ea8084873a.r2.dev/IMG_7409.jpeg";
 
-// 首頁測試
-app.get("/", (req, res) => {
-  res.send("LINE Bot Running");
-});
+// 防重複（避免重複觸發）
+const handled = new Set();
 
-// LINE Webhook
-app.post("/webhook", async (req, res) => {
-
-  // 一定要先回 200，避免 timeout
+// --------------------
+// webhook
+// --------------------
+app.post("/webhook", (req, res) => {
   res.sendStatus(200);
 
   const events = req.body.events || [];
 
   for (const event of events) {
-
-    console.log("收到事件:", event.type);
-
-    // Bot 被加入群組
-    if (event.type === "join") {
-      sendWelcomeImage(event.replyToken);
-    }
-
-    // 有人加入群組（若 LINE 有送此事件）
-    if (event.type === "memberJoined") {
-      sendWelcomeImage(event.replyToken);
-    }
+    handleEvent(event);
   }
 });
 
-// 發送歡迎圖片
-async function sendWelcomeImage(replyToken) {
-  try {
+// --------------------
+// 事件處理
+// --------------------
+function handleEvent(event) {
+  console.log("收到事件:", event.type);
 
-    const response = await fetch(
-      "https://api.line.me/v2/bot/message/reply",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${TOKEN}`
-        },
-        body: JSON.stringify({
-          replyToken,
-          messages: [
-            {
-              type: "image",
-              originalContentUrl: IMAGE_URL,
-              previewImageUrl: IMAGE_URL
-            }
-          ]
-        })
-      }
-    );
+  // 防重複 replyToken
+  if (event.replyToken && handled.has(event.replyToken)) return;
+  if (event.replyToken) handled.add(event.replyToken);
 
-    const result = await response.text();
-    console.log("LINE 回應:", result);
+  // ❌ Bot 被加進群組：不要發圖
+  if (event.type === "join") {
+    console.log("bot加入群組，不發圖");
+    return;
+  }
 
-  } catch (error) {
-    console.error("發送失敗:", error);
+  // ✅ 有人加入群組才發圖
+  if (event.type === "memberJoined") {
+    sendImage(event.replyToken);
   }
 }
 
-// Render Port
-const PORT = process.env.PORT || 3000;
+// --------------------
+// 發圖
+// --------------------
+async function sendImage(replyToken) {
+  try {
+    await fetch("https://api.line.me/v2/bot/message/reply", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${TOKEN}`
+      },
+      body: JSON.stringify({
+        replyToken,
+        messages: [
+          {
+            type: "image",
+            originalContentUrl: IMAGE_URL,
+            previewImageUrl: IMAGE_URL
+          }
+        ]
+      })
+    });
+  } catch (err) {
+    console.error("發送失敗:", err);
+  }
+}
 
+// --------------------
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log("running on", PORT);
 });
